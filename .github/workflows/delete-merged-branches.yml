@@ -1,0 +1,25 @@
+name: Delete Merged Branches
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs daily at midnight UTC
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  delete-merged-branches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Delete merged branches
+        run: |
+          git fetch --prune
+          for branch in $(git branch -r --merged origin/main | grep -v "main" | sed 's/origin\///'); do
+            if [ "$branch" != "main" ] && [ "$branch" != "develop" ]; then
+              echo "Deleting branch: $branch"
+              git push origin --delete $branch
+            fi
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
